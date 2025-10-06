@@ -1,6 +1,8 @@
-# Welcome to your Lovable project
+# Kultrip - Story Trip Builder
 
 ## Project info
+
+Transform stories into unforgettable journeys with AI-powered travel guides for travel agencies.
 
 **URL**: https://lovable.dev/projects/52ca19b9-d13a-44a5-8f07-fea6ad4a9c10
 

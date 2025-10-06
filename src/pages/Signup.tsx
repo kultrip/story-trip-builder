@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/kultrip-logo.png";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -23,13 +24,35 @@ const Signup = () => {
     e.preventDefault();
     setLoading(true);
 
-    // TODO: Implement Supabase auth signup
-    // For now, simulate signup
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            agency_name: formData.agencyName,
+            contact_name: formData.contactName,
+            website: formData.website,
+            country: formData.country,
+          }
+        }
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        toast.success("Account created! Please check your email to verify your account.");
+        // Don't navigate to dashboard immediately, wait for email verification
+        navigate("/login");
+      }
+    } catch (error) {
+      toast.error("An error occurred during signup");
       setLoading(false);
-      toast.success("Account created! Welcome to Kultrip.");
-      navigate("/dashboard");
-    }, 1500);
+    }
   };
 
   return (

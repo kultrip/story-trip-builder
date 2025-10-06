@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import logo from "@/assets/kultrip-logo.png";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -19,13 +20,26 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    // TODO: Implement Supabase auth login
-    // For now, simulate login
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        toast.success("Welcome back!");
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      toast.error("An error occurred during login");
       setLoading(false);
-      toast.success("Welcome back!");
-      navigate("/dashboard");
-    }, 1500);
+    }
   };
 
   return (
