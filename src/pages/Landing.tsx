@@ -68,6 +68,29 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Video Section */}
+      <section className="py-20 md:py-32 bg-muted/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">See Kultrip in Action</h2>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Watch how we help travel agencies create unforgettable experiences
+            </p>
+          </div>
+          <div className="max-w-4xl mx-auto">
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                className="absolute top-0 left-0 w-full h-full rounded-2xl shadow-2xl"
+                src="https://www.youtube.com/embed/QyccRi4G8vo"
+                title="Kultrip Pitch Video"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works */}
       <section id="how-it-works" className="py-20 md:py-32">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">

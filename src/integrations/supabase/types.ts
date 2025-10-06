@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      leads: {
+        Row: {
+          agency_id: string
+          created_at: string
+          destination: string | null
+          guide_generated_at: string
+          id: string
+          notes: string | null
+          status: string | null
+          story_theme: string
+          traveler_email: string
+          traveler_name: string
+          traveler_phone: string | null
+        }
+        Insert: {
+          agency_id: string
+          created_at?: string
+          destination?: string | null
+          guide_generated_at?: string
+          id?: string
+          notes?: string | null
+          status?: string | null
+          story_theme: string
+          traveler_email: string
+          traveler_name: string
+          traveler_phone?: string | null
+        }
+        Update: {
+          agency_id?: string
+          created_at?: string
+          destination?: string | null
+          guide_generated_at?: string
+          id?: string
+          notes?: string | null
+          status?: string | null
+          story_theme?: string
+          traveler_email?: string
+          traveler_name?: string
+          traveler_phone?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

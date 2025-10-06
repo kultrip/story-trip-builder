@@ -1,19 +1,80 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
-import { LayoutDashboard, Code, CreditCard, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Code, CreditCard, Settings, LogOut, Mail, Phone, Download } from "lucide-react";
 import logo from "@/assets/kultrip-logo.png";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+interface Lead {
+  id: string;
+  traveler_name: string;
+  traveler_email: string;
+  traveler_phone: string | null;
+  story_theme: string;
+  destination: string | null;
+  guide_generated_at: string;
+  status: string;
+  created_at: string;
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   
-  // Mock agency ID - in real implementation, this would come from auth
-  const agencyId = "demo-agency-123";
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    if (userId) {
+      fetchLeads();
+    }
+  }, [userId]);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setUserId(user.id);
+  };
+
+  const fetchLeads = async () => {
+    if (!userId) return;
+    
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("leads")
+      .select("*")
+      .eq("agency_id", userId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast.error("Failed to load leads");
+      console.error(error);
+    } else {
+      setLeads(data || []);
+    }
+    setLoading(false);
+  };
+  
+  const agencyId = userId || "demo-agency-123";
   const widgetCode = `<script src="https://kultrip.com/widget.js" data-agency-id="${agencyId}"></script>`;
 
   const handleCopyCode = () => {
@@ -23,10 +84,55 @@ const Dashboard = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleLogout = () => {
-    // TODO: Implement Supabase logout
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     toast.success("Logged out successfully");
     navigate("/landing");
+  };
+
+  const handleContactEmail = (email: string, name: string) => {
+    window.location.href = `mailto:${email}?subject=Your Kultrip Travel Guide&body=Hi ${name},%0D%0A%0D%0AThank you for using our Kultrip service...`;
+    toast.success("Opening email client...");
+  };
+
+  const handleContactPhone = (phone: string) => {
+    window.open(`https://wa.me/${phone.replace(/\D/g, '')}`, '_blank');
+    toast.success("Opening WhatsApp...");
+  };
+
+  const exportToCSV = () => {
+    if (leads.length === 0) {
+      toast.error("No leads to export");
+      return;
+    }
+
+    const headers = ["Name", "Email", "Phone", "Theme", "Destination", "Status", "Generated At"];
+    const rows = leads.map(lead => [
+      lead.traveler_name,
+      lead.traveler_email,
+      lead.traveler_phone || "N/A",
+      lead.story_theme,
+      lead.destination || "N/A",
+      lead.status,
+      new Date(lead.guide_generated_at).toLocaleDateString()
+    ]);
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `kultrip-leads-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+    
+    toast.success("Leads exported successfully!");
   };
 
   return (
@@ -77,13 +183,13 @@ const Dashboard = () => {
             <div className="grid md:grid-cols-3 gap-6">
               <Card className="p-6">
                 <div className="text-sm text-muted-foreground mb-2">Total Guides</div>
-                <div className="text-3xl font-bold">0</div>
-                <div className="text-xs text-muted-foreground mt-1">Last 30 days</div>
+                <div className="text-3xl font-bold">{leads.length}</div>
+                <div className="text-xs text-muted-foreground mt-1">All time</div>
               </Card>
               <Card className="p-6">
                 <div className="text-sm text-muted-foreground mb-2">Leads Generated</div>
-                <div className="text-3xl font-bold">0</div>
-                <div className="text-xs text-muted-foreground mt-1">Last 30 days</div>
+                <div className="text-3xl font-bold">{leads.length}</div>
+                <div className="text-xs text-muted-foreground mt-1">All time</div>
               </Card>
               <Card className="p-6">
                 <div className="text-sm text-muted-foreground mb-2">Current Plan</div>
@@ -95,14 +201,72 @@ const Dashboard = () => {
             </div>
 
             <Card className="p-6">
-              <h2 className="text-xl font-semibold mb-4">Welcome to Kultrip! 🎉</h2>
-              <p className="text-muted-foreground mb-4">
-                Get started by installing the widget on your website. Your travelers will be able to
-                generate AI-powered travel guides inspired by their favorite stories.
-              </p>
-              <Button variant="hero" onClick={() => {}}>
-                Install Widget
-              </Button>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold">Recent Leads</h2>
+                <Button variant="outline" size="sm" onClick={exportToCSV} disabled={leads.length === 0}>
+                  <Download className="w-4 h-4 mr-2" />
+                  Export CSV
+                </Button>
+              </div>
+              
+              {loading ? (
+                <p className="text-muted-foreground text-center py-8">Loading leads...</p>
+              ) : leads.length === 0 ? (
+                <div>
+                  <p className="text-muted-foreground mb-4">
+                    No leads yet. Install the widget on your website to start receiving leads!
+                  </p>
+                  <Button variant="hero" onClick={() => document.querySelector('[value="widget"]')?.dispatchEvent(new MouseEvent('click', { bubbles: true }))}>
+                    Install Widget
+                  </Button>
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Traveler</TableHead>
+                        <TableHead>Theme</TableHead>
+                        <TableHead>Destination</TableHead>
+                        <TableHead>Generated</TableHead>
+                        <TableHead>Contact</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {leads.slice(0, 10).map((lead) => (
+                        <TableRow key={lead.id}>
+                          <TableCell className="font-medium">{lead.traveler_name}</TableCell>
+                          <TableCell>{lead.story_theme}</TableCell>
+                          <TableCell>{lead.destination || "N/A"}</TableCell>
+                          <TableCell>{new Date(lead.guide_generated_at).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleContactEmail(lead.traveler_email, lead.traveler_name)}
+                                title="Send email"
+                              >
+                                <Mail className="w-4 h-4" />
+                              </Button>
+                              {lead.traveler_phone && (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleContactPhone(lead.traveler_phone!)}
+                                  title="WhatsApp"
+                                >
+                                  <Phone className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </Card>
           </TabsContent>
 
