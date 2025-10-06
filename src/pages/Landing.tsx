@@ -285,11 +285,11 @@ const Landing = () => {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary">✓</span>
-                  <span className="text-sm">Priority support</span>
+                  <span className="text-sm">Agency's experiences integration</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-primary">✓</span>
-                  <span className="text-sm">Custom branding</span>
+                  <span className="text-sm">CRM Integration</span>
                 </li>
               </ul>
               <Button variant="outline" className="w-full" onClick={() => navigate("/signup")}>
