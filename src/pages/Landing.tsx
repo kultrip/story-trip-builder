@@ -3,9 +3,22 @@ import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Map, BarChart3, Zap, Globe, Code } from "lucide-react";
 import logo from "@/assets/kultrip-logo.png";
+import heroImage1 from "@/assets/hero-travel-1.jpg";
+import heroImage2 from "@/assets/hero-travel-2.jpg";
+import heroImage3 from "@/assets/hero-travel-3.jpg";
+import { useState, useEffect } from "react";
 
 const Landing = () => {
   const navigate = useNavigate();
+  const [currentImage, setCurrentImage] = useState(0);
+  const heroImages = [heroImage1, heroImage2, heroImage3];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % heroImages.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -43,28 +56,63 @@ const Landing = () => {
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-secondary/10 to-background" />
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 relative">
+        {/* Background Image Carousel */}
+        <div className="absolute inset-0 z-0">
+          {heroImages.map((img, idx) => (
+            <div
+              key={idx}
+              className={`absolute inset-0 transition-opacity duration-1000 ${
+                idx === currentImage ? "opacity-100" : "opacity-0"
+              }`}
+            >
+              <img
+                src={img}
+                alt={`Travel inspiration ${idx + 1}`}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background/90" />
+            </div>
+          ))}
+        </div>
+
+        {/* Hero Content */}
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight drop-shadow-lg">
               Turn stories into{" "}
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 unforgettable journeys
               </span>{" "}
               ✨
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-lg md:text-xl text-foreground/90 mb-8 max-w-2xl mx-auto font-medium drop-shadow">
               With Kultrip, your agency can offer AI-generated travel guides inspired by books, movies, and series.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="hero" size="lg" onClick={() => navigate("/signup")}>
+              <Button variant="hero" size="lg" onClick={() => navigate("/signup")} className="shadow-lg">
                 Get Started Free
               </Button>
-              <Button variant="outline" size="lg" onClick={() => navigate("/login")}>
+              <Button variant="outline" size="lg" onClick={() => navigate("/login")} className="bg-background/80 backdrop-blur-sm">
                 Log In
               </Button>
             </div>
           </div>
+        </div>
+
+        {/* Image Indicators */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+          {heroImages.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setCurrentImage(idx)}
+              className={`w-2 h-2 rounded-full transition-all ${
+                idx === currentImage
+                  ? "bg-primary w-8"
+                  : "bg-muted-foreground/50 hover:bg-muted-foreground"
+              }`}
+              aria-label={`View image ${idx + 1}`}
+            />
+          ))}
         </div>
       </section>
 

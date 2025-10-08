@@ -29,6 +29,7 @@ const Signup = () => {
         email: formData.email,
         password: formData.password,
         options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
           data: {
             agency_name: formData.agencyName,
             contact_name: formData.contactName,
@@ -45,9 +46,8 @@ const Signup = () => {
       }
 
       if (data.user) {
-        toast.success("Account created! Please check your email to verify your account.");
-        // Don't navigate to dashboard immediately, wait for email verification
-        navigate("/login");
+        toast.success("Account created successfully! Redirecting to dashboard...");
+        navigate("/dashboard");
       }
     } catch (error) {
       toast.error("An error occurred during signup");

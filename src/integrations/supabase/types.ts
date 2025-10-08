@@ -56,6 +56,98 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          agency_name: string
+          api_key: string
+          contact_name: string
+          country: string
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          subscription_status: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          agency_name: string
+          api_key?: string
+          contact_name: string
+          country: string
+          created_at?: string
+          email: string
+          id: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          subscription_status?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          agency_name?: string
+          api_key?: string
+          contact_name?: string
+          country?: string
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          subscription_status?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          ends_at: string | null
+          id: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          price_per_lead: number
+          price_per_month: number
+          started_at: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          plan: Database["public"]["Enums"]["subscription_plan"]
+          price_per_lead: number
+          price_per_month: number
+          started_at?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ends_at?: string | null
+          id?: string
+          plan?: Database["public"]["Enums"]["subscription_plan"]
+          price_per_lead?: number
+          price_per_month?: number
+          started_at?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -64,7 +156,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      subscription_plan: "free" | "basic" | "premium"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -191,6 +283,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      subscription_plan: ["free", "basic", "premium"],
+    },
   },
 } as const
