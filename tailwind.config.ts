@@ -57,6 +57,15 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        kultrip: {
+          purple: {
+            DEFAULT: "hsl(262 52% 47%)",
+            dark: "hsl(260 50% 40%)",
+          },
+          orange: {
+            DEFAULT: "hsl(25 100% 63%)",
+          },
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -87,5 +96,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
 } satisfies Config;
