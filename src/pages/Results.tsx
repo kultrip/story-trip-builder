@@ -5,13 +5,10 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
-import Map from "@/components/ui/Map";
-import ItineraryCard from "@/components/ItineraryCard";
+import PlaceCard from "@/components/PlaceCard";
 import { generateItineraryPDF } from "@/utils/generateItineraryPDF.js"
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import apiCall from "@/services/apiCall";
 import {
@@ -32,31 +29,17 @@ import {
   Star,
   ChevronDown,
   ChevronUp,
-  Navigation,
-  Camera,
-  Coffee,
-  Utensils,
-  ShoppingBag,
-  Compass,
-  Globe,
-  ArrowRight,
-  PlayCircle,
-  Eye,
-  ChevronLeft,
-  ChevronRight
+  Compass
 } from "lucide-react";
-import { Itinerary, Activity, DayPlan, Location } from "@/utils/types";
+import { Itinerary } from "@/utils/types";
 import { searchImages } from "@/services/imageService";
 import { useNavigate } from "react-router-dom";
 
 const Results = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [activeDay, setActiveDay] = useState(1);
-  const [mapLocations, setMapLocations] = useState<Location[]>([]);
   const [destinationImage, setDestinationImage] = useState("");
-  const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({});
-  const [currentImageIndex, setCurrentImageIndex] = useState<{[key: string]: number}>({});
+  const [expandedDays, setExpandedDays] = useState<{[key: number]: boolean}>({});
   const [retryCount, setRetryCount] = useState(0);
 
   // For PDF loading overlay
@@ -235,24 +218,10 @@ const Results = () => {
     navigate("/generator?id=" + lastSegment);
   };
 
-  const toggleSection = (sectionId: string) => {
-    setExpandedSections(prev => ({
+  const toggleDay = (dayNumber: number) => {
+    setExpandedDays(prev => ({
       ...prev,
-      [sectionId]: !prev[sectionId]
-    }));
-  };
-
-  const nextImage = (activityId: string, totalImages: number) => {
-    setCurrentImageIndex(prev => ({
-      ...prev,
-      [activityId]: ((prev[activityId] || 0) + 1) % totalImages
-    }));
-  };
-
-  const prevImage = (activityId: string, totalImages: number) => {
-    setCurrentImageIndex(prev => ({
-      ...prev,
-      [activityId]: ((prev[activityId] || 0) - 1 + totalImages) % totalImages
+      [dayNumber]: !prev[dayNumber]
     }));
   };
 
@@ -272,20 +241,6 @@ const Results = () => {
       fetchDestinationImage();
     }
   }, [itinerary]);
-
-  useEffect(() => {
-    if (itinerary) {
-      const day = itinerary?.days?.find((d) => d.day === activeDay);
-      if (day) {
-        const locations: Location[] = [
-          ...day.morningActivities.map((a) => a.location),
-          ...day.afternoonActivities.map((a) => a.location),
-          ...day.eveningActivities.map((a) => a.location),
-        ];
-        setMapLocations(locations);
-      }
-    }
-  }, [activeDay, itinerary]);
 
   // Dialog logic: open if error
   useEffect(() => {
@@ -371,11 +326,16 @@ const Results = () => {
     );
   }
 
-  const getWeatherIcon = (description) => {
-    if (Array.isArray(description)) {
-      description = description.find((item) => typeof item === "string") || "";
+  const getWeatherIcon = (description?: string, icon?: string) => {
+    // If icon is provided, use it to determine the icon
+    if (icon) {
+      const iconLower = icon.toLowerCase();
+      if (iconLower.includes('cloud')) return <Cloud className="h-5 w-5" />;
+      if (iconLower.includes('rain') || iconLower.includes('shower')) return <CloudRain className="h-5 w-5" />;
+      if (iconLower.includes('sun') || iconLower.includes('clear')) return <Sun className="h-5 w-5" />;
     }
-    if (typeof description !== "string" || description.trim() === "") {
+    
+    if (!description || description.trim() === "") {
       return <Sun className="h-5 w-5" />;
     }
     const desc = description.toLowerCase();
@@ -536,7 +496,7 @@ const Results = () => {
                       Weather Forecast
                     </h3>
                     <div className="space-y-3">
-                      {itinerary?.days?.slice(0, 3).map((day, index) => (
+                      {itinerary?.result?.dailyItineraries?.slice(0, 3).map((day, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                           <div className="flex items-center">
                             <div className="w-8 h-8 rounded-full bg-kultrip-purple/10 flex items-center justify-center mr-3 text-kultrip-purple font-semibold text-sm">
@@ -551,10 +511,10 @@ const Results = () => {
                             </span>
                           </div>
                           <div className="flex items-center">
-                            {getWeatherIcon(day.weatherInfo?.description)}
+                            {getWeatherIcon(day.weather?.description, day.weather?.icon)}
                             <span className="ml-2 text-sm">
-                              {day.weatherInfo?.temperature != null
-                                ? `${day.weatherInfo.temperature}°C`
+                              {day.weather?.temperature != null
+                                ? `${day.weather.temperature}°C`
                                 : ""}
                             </span>
                           </div>
@@ -611,7 +571,7 @@ const Results = () => {
 
               {/* Day-by-Day Itinerary */}
               <div className="space-y-6">
-                {itinerary?.days?.map((day, dayIndex) => (
+                {itinerary?.result?.dailyItineraries?.map((day, dayIndex) => (
                   <Card key={dayIndex} className="border-0 shadow-lg overflow-hidden">
                     
                     {/* Day Header */}
@@ -630,22 +590,24 @@ const Results = () => {
                           </p>
                         </div>
                         <div className="flex items-center space-x-4">
-                          <div className="flex items-center bg-white/20 rounded-full px-3 py-1">
-                            {getWeatherIcon(day.weatherInfo?.description)}
-                            <span className="ml-2 text-sm">
-                              {day.weatherInfo?.description || ""}
-                              {day.weatherInfo?.temperature != null
-                                ? `, ${day.weatherInfo.temperature}°C`
-                                : ""}
-                            </span>
-                          </div>
+                          {day.weather && (
+                            <div className="flex items-center bg-white/20 rounded-full px-3 py-1">
+                              {getWeatherIcon(day.weather.description, day.weather.icon)}
+                              <span className="ml-2 text-sm">
+                                {day.weather.description || ""}
+                                {day.weather.temperature != null
+                                  ? `, ${day.weather.temperature}°C`
+                                  : ""}
+                              </span>
+                            </div>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
                             className="text-white hover:bg-white/20"
-                            onClick={() => toggleSection(`day-${day.day}`)}
+                            onClick={() => toggleDay(day.day)}
                           >
-                            {expandedSections[`day-${day.day}`] ? (
+                            {expandedDays[day.day] ? (
                               <ChevronUp className="h-5 w-5" />
                             ) : (
                               <ChevronDown className="h-5 w-5" />
@@ -656,130 +618,26 @@ const Results = () => {
                     </div>
 
                     {/* Day Content */}
-                    <div className={`transition-all duration-300 ${expandedSections[`day-${day.day}`] ? 'max-h-none' : 'max-h-96 overflow-hidden'}`}>
+                    <div className={`transition-all duration-300 ${expandedDays[day.day] === false ? 'max-h-0 overflow-hidden' : 'max-h-none'}`}>
                       
-                      {/* Map Section */}
-                      <div className="p-6 bg-gray-50">
-                        <div className="flex items-center mb-4">
-                          <Navigation className="h-5 w-5 text-kultrip-purple mr-2" />
-                          <h4 className="font-semibold text-gray-800">Today's Locations</h4>
-                        </div>
-                        <div className="rounded-lg overflow-hidden shadow-sm">
-                          <Map
-                            locations={[
-                              ...day.morningActivities.map((a) => a.location),
-                              ...day.afternoonActivities.map((a) => a.location),
-                              ...day.eveningActivities.map((a) => a.location),
-                            ].filter(
-                              (loc) =>
-                                loc &&
-                                typeof loc.lat === "number" && !isNaN(loc.lat) &&
-                                typeof loc.lng === "number" && !isNaN(loc.lng)
-                            )}
-                            zoom={13}
-                            interactive={true}
-                            className="h-64"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Activities Timeline */}
-                      <div className="p-6">
-                        <div className="space-y-8">
-                          
-                          {/* Morning */}
-                          <div className="relative">
-                            <div className="flex items-center mb-4">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 flex items-center justify-center mr-4 shadow-lg">
-                                <Sun className="h-6 w-6 text-white" />
-                              </div>
-                              <div>
-                                <h4 className="font-display text-xl font-semibold text-gray-800">Morning</h4>
-                                <p className="text-gray-500 text-sm">Start your day with wonder</p>
-                              </div>
-                            </div>
-                            <div className="ml-16 space-y-4">
-                              {day.morningActivities.map((activity, actIndex) => (
-                                <ActivityCard 
-                                  key={actIndex} 
-                                  activity={activity} 
-                                  currentImageIndex={currentImageIndex}
-                                  nextImage={nextImage}
-                                  prevImage={prevImage}
-                                />
-                              ))}
-                            </div>
+                      {/* Places/Activities */}
+                      <div className="p-6 space-y-6">
+                        {day.places && day.places.length > 0 ? (
+                          day.places.map((place, placeIndex) => (
+                            <PlaceCard 
+                              key={placeIndex} 
+                              place={place}
+                              googleMapsApiKey={itinerary.googleMapsApiKey}
+                            />
+                          ))
+                        ) : (
+                          <div className="text-center py-8 text-gray-500">
+                            No places scheduled for this day
                           </div>
-
-                          <Separator className="my-8" />
-
-                          {/* Afternoon */}
-                          <div className="relative">
-                            <div className="flex items-center mb-4">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-kultrip-purple to-kultrip-orange flex items-center justify-center mr-4 shadow-lg">
-                                <Clock className="h-6 w-6 text-white" />
-                              </div>
-                              <div>
-                                <h4 className="font-display text-xl font-semibold text-gray-800">Afternoon</h4>
-                                <p className="text-gray-500 text-sm">Dive deeper into the story</p>
-                              </div>
-                            </div>
-                            <div className="ml-16 space-y-4">
-                              {day.afternoonActivities.map((activity, actIndex) => (
-                                <ActivityCard 
-                                  key={actIndex} 
-                                  activity={activity} 
-                                  currentImageIndex={currentImageIndex}
-                                  nextImage={nextImage}
-                                  prevImage={prevImage}
-                                />
-                              ))}
-                            </div>
-                          </div>
-
-                          <Separator className="my-8" />
-
-                          {/* Evening */}
-                          <div className="relative">
-                            <div className="flex items-center mb-4">
-                              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center mr-4 shadow-lg">
-                                <Moon className="h-6 w-6 text-white" />
-                              </div>
-                              <div>
-                                <h4 className="font-display text-xl font-semibold text-gray-800">Evening</h4>
-                                <p className="text-gray-500 text-sm">End with magical moments</p>
-                              </div>
-                            </div>
-                            <div className="ml-16 space-y-4">
-                              {day.eveningActivities.map((activity, actIndex) => (
-                                <ActivityCard 
-                                  key={actIndex} 
-                                  activity={activity} 
-                                  currentImageIndex={currentImageIndex}
-                                  nextImage={nextImage}
-                                  prevImage={prevImage}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        </div>
+                        )}
                       </div>
                     </div>
 
-                    {/* Expand/Collapse Footer */}
-                    {!expandedSections[`day-${day.day}`] && (
-                      <div className="p-4 bg-gray-50 border-t">
-                        <Button
-                          variant="ghost"
-                          className="w-full text-kultrip-purple hover:bg-kultrip-purple/5"
-                          onClick={() => toggleSection(`day-${day.day}`)}
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Full Day Details
-                          <ChevronDown className="h-4 w-4 ml-2" />
-                        </Button>
-                      </div>
-                    )}
                   </Card>
                 ))}
               </div>
@@ -847,208 +705,5 @@ const Results = () => {
     </div>
   );
 };
-
-// Enhanced Activity Card Component with console.info for image debugging
-const ActivityCard: React.FC<{
-  activity: Activity;
-  currentImageIndex: { [key: string]: number };
-  nextImage: (activityId: string, totalImages: number) => void;
-  prevImage: (activityId: string, totalImages: number) => void;
-}> = ({ activity, currentImageIndex, nextImage, prevImage }) => {
-  const [expanded, setExpanded] = useState(false);
-
-  // Gather all possible images from activity and location
-  const images: string[] = (
-    (Array.isArray(activity.images) && activity.images.length > 0)
-      ? activity.images
-      : (activity.image ? [activity.image] : [])
-  ).concat(
-    (activity.location && Array.isArray(activity.location.images) && activity.location.images.length > 0)
-      ? activity.location.images
-      : (activity.location && activity.location.image ? [activity.location.image] : [])
-  );
-
-  // Remove duplicates
-  const uniqueImages = Array.from(new Set(images));
-  const currentIndex = currentImageIndex[activity.id] || 0;
-
-  // Logging images to console for debugging
-  useEffect(() => {
-    if (!uniqueImages.length) {
-      // No images found for activity
-      console.info(`[Itinerary][ActivityCard] No images for activity "${activity.title}" (ID: ${activity.id})`);
-    } else {
-      uniqueImages.forEach((imgUrl, idx) => {
-        // Try to check image loadability using JS Image object (status: found or not)
-        const img = new window.Image();
-        img.onload = () =>
-          console.info(`[Itinerary][ActivityCard] Image found for activity "${activity.title}" (ID: ${activity.id}): ${imgUrl} [status: FOUND]`);
-        img.onerror = () =>
-          console.info(`[Itinerary][ActivityCard] Image NOT found for activity "${activity.title}" (ID: ${activity.id}): ${imgUrl} [status: NOT FOUND]`);
-        img.src = imgUrl;
-      });
-    }
-  }, [activity.id, activity.title, uniqueImages]);
-
-  return (
-    <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
-        {/* Image Section */}
-        <div className="md:col-span-1 relative h-48 md:h-auto">
-          {uniqueImages.length > 0 ? (
-            <div className="relative h-full">
-              <img
-                src={uniqueImages[currentIndex]}
-                alt={activity.title}
-                className="w-full h-full object-cover"
-                style={{ minHeight: 192, maxHeight: 320, objectFit: "cover" }}
-              />
-              {uniqueImages.length > 1 && (
-                <>
-                  <button
-                    onClick={() => prevImage(activity.id, uniqueImages.length)}
-                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </button>
-                  <button
-                    onClick={() => nextImage(activity.id, uniqueImages.length)}
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white rounded-full p-1 hover:bg-black/70 transition-colors"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </button>
-                  <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex space-x-1">
-                    {uniqueImages.map((_, idx) => (
-                      <div
-                        key={idx}
-                        className={`w-2 h-2 rounded-full ${
-                          idx === currentIndex ? "bg-white" : "bg-white/50"
-                        }`}
-                      />
-                    ))}
-                  </div>
-                </>
-              )}
-              <div className="absolute top-3 left-3 bg-kultrip-purple/90 text-white text-xs font-medium px-2 py-1 rounded-full">
-                {activity.time}
-              </div>
-            </div>
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-kultrip-purple/20 to-kultrip-orange/20 flex items-center justify-center">
-              <Camera className="h-12 w-12 text-kultrip-purple/50" />
-            </div>
-          )}
-        </div>
-
-        {/* Content Section */}
-        <div className="md:col-span-2 p-6">
-          <div className="flex items-start justify-between mb-3">
-            <h3 className="font-display text-xl font-semibold text-gray-800 leading-tight">
-              {activity.title}
-            </h3>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setExpanded(!expanded)}
-              className="text-kultrip-purple hover:bg-kultrip-purple/5 flex-shrink-0 ml-4"
-            >
-              {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
-          </div>
-
-          <div className={`text-gray-600 leading-relaxed ${expanded ? "" : "line-clamp-3"}`}>
-            <p>{activity.description}</p>
-          </div>
-
-          {activity.location && (
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-start">
-                <MapPin className="h-4 w-4 text-kultrip-purple mr-2 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-800 text-sm">{activity.location.name}</h4>
-                  <p className="text-xs text-gray-500 mb-2">{activity.location.address}</p>
-
-                  {activity.location.inspirationReference && (
-                    <p className="text-xs italic text-kultrip-purple mb-2 bg-kultrip-purple/5 px-2 py-1 rounded">
-                      {activity.location.inspirationReference}
-                    </p>
-                  )}
-
-                  {expanded && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 text-xs">
-                      {activity.location.openingHours && (
-                        <div className="flex items-start">
-                          <Clock className="h-3 w-3 mr-1 mt-0.5 text-kultrip-purple flex-shrink-0" />
-                          <div>
-                            <span className="font-medium">Hours:</span>
-                            <div className="text-gray-600">
-                              {Array.isArray(activity.location.openingHours)
-                                ? activity.location.openingHours.join(", ")
-                                : activity.location.openingHours}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {activity.location.pricing && (
-                        <div className="flex items-center">
-                          <Coffee className="h-3 w-3 mr-1 text-green-500" />
-                          <span className="font-medium mr-1">Price:</span>
-                          <span className="text-gray-600">{activity.location.pricing}</span>
-                        </div>
-                      )}
-
-                      {activity.location.website && (
-                        <div className="flex items-center">
-                          <Globe className="h-3 w-3 mr-1 text-kultrip-purple" />
-                          <a
-                            href={activity.location.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-kultrip-purple hover:underline"
-                          >
-                            Visit Website
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activity.bookingUrl && (
-            <div className="mt-4">
-              <Button
-                size="sm"
-                className="bg-kultrip-orange hover:bg-kultrip-orange/90 text-white"
-                onClick={() => window.open(activity.bookingUrl, "_blank")}
-              >
-                <PlayCircle className="h-4 w-4 mr-2" />
-                Book Experience
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-    </Card>
-  );
-};
-
-const Moon = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
-  </svg>
-);
 
 export default Results;

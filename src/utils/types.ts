@@ -41,6 +41,7 @@ export interface Itinerary {
   durationOfTrip: string;
   travelerType: string;
   tripSummary_en?: string;
+  googleMapsApiKey?: string;
   days?: DayPlan[];
   result?: {
     dailyItineraries?: DailyItinerary[];
