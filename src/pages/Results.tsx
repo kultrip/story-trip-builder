@@ -62,6 +62,11 @@ const Results = () => {
     queryFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
+      // Validate id parameter
+      if (!id || isNaN(parseInt(id))) {
+        throw new Error("Invalid itinerary ID");
+      }
+      
       try {
         const itineraryData = await apiCall.getItinerary({ id: parseInt(id) });
 
@@ -99,11 +104,7 @@ const Results = () => {
           ...result,
         };
       } catch (err) {
-        // Only throw if it's a genuine fetch/API error
-        if (err instanceof TypeError || (err as any)?.message?.includes("fetch")) {
-          throw err;
-        }
-        // For other errors, re-throw them
+        // Re-throw all errors - the useEffect will handle reimbursement for true errors
         throw err;
       }
     },
