@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp, Clock, Globe, Phone, MapPin, Star } from 'lucid
 import PhotoGallery from './PhotoGallery';
 import MapEmbed from './MapEmbed';
 import { Place } from '@/utils/types';
+import { processPlaceImages } from '@/utils/googleMapsPhotos';
 
 interface PlaceCardProps {
   place: Place;
@@ -15,9 +16,12 @@ interface PlaceCardProps {
 const PlaceCard: React.FC<PlaceCardProps> = ({ place, googleMapsApiKey }) => {
   const [isPracticalOpen, setIsPracticalOpen] = useState(false);
 
+  // Process images to convert Google photo references to full URLs
+  const processedImages = processPlaceImages(place.images, googleMapsApiKey);
+  
   // Get hero image (first from images array or use placeholder)
-  const heroImage = place.images && place.images.length > 0 
-    ? place.images[0] 
+  const heroImage = processedImages.length > 0 
+    ? processedImages[0] 
     : undefined;
 
   // Format description with bold literary references
@@ -41,7 +45,7 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, googleMapsApiKey }) => {
       {/* Hero Image with Gallery */}
       {heroImage && (
         <PhotoGallery 
-          images={place.images || []} 
+          images={processedImages} 
           heroImage={heroImage}
           alt={place.name_en}
         />
