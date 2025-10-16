@@ -58,6 +58,7 @@ const Results = () => {
   const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({});
   const [currentImageIndex, setCurrentImageIndex] = useState<{[key: string]: number}>({});
   const [retryCount, setRetryCount] = useState(0);
+  const [viewMode, setViewMode] = useState<'standard' | 'markdown'>('standard');
 
   // For PDF loading overlay
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -391,6 +392,99 @@ const Results = () => {
     return <Sparkles className="h-4 w-4" />;
   };
 
+  const generateMarkdownView = () => {
+    if (!itinerary) return "";
+
+    let markdown = `<div class="prose prose-lg max-w-none p-8">`;
+    
+    // Header
+    markdown += `<h1 class="text-4xl font-bold text-kultrip-purple mb-2">Inspired Trip Itinerary: ${itinerary.destination}</h1>`;
+    markdown += `<p class="text-lg text-gray-700 mb-6"><strong>Theme:</strong> ${itinerary.inspiration} | <strong>Duration:</strong> ${itinerary.durationOfTrip} Days</p>`;
+    markdown += `<hr class="my-8 border-gray-300" />`;
+
+    // Trip Summary if available
+    if (itinerary.tripSummary_en) {
+      markdown += `<div class="bg-gradient-to-r from-kultrip-purple/5 to-kultrip-orange/5 p-6 rounded-lg mb-8">`;
+      markdown += `<p class="text-gray-700 leading-relaxed italic">${itinerary.tripSummary_en}</p>`;
+      markdown += `</div>`;
+    }
+
+    // Days
+    itinerary.days?.forEach((day, dayIndex) => {
+      const dateFormatted = new Date(day.date).toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      });
+
+      markdown += `<h2 class="text-3xl font-bold text-kultrip-purple mt-12 mb-4">Day ${day.day}: ${dateFormatted}</h2>`;
+      
+      // Weather info
+      if (day.weatherInfo) {
+        markdown += `<p class="text-gray-600 mb-6"><strong>Weather:</strong> ${day.weatherInfo.description || "N/A"}${day.weatherInfo.temperature ? `, ${day.weatherInfo.temperature}°C` : ""}</p>`;
+      }
+
+      // Process all activities
+      const allActivities = [
+        ...day.morningActivities.map(a => ({ ...a, period: 'Morning' })),
+        ...day.afternoonActivities.map(a => ({ ...a, period: 'Afternoon' })),
+        ...day.eveningActivities.map(a => ({ ...a, period: 'Evening' }))
+      ];
+
+      allActivities.forEach((activity) => {
+        markdown += `<div class="my-8 p-6 bg-gray-50 rounded-lg">`;
+        markdown += `<h3 class="text-2xl font-semibold text-gray-800 mb-2">📍 ${activity.title}</h3>`;
+        markdown += `<p class="text-sm text-kultrip-purple mb-3"><em>${activity.period} - ${activity.time}</em></p>`;
+        
+        // Description
+        if (activity.description) {
+          markdown += `<p class="text-gray-700 mb-4 leading-relaxed">${activity.description}</p>`;
+        }
+
+        // Practical Information
+        if (activity.location) {
+          markdown += `<h4 class="text-lg font-semibold text-gray-800 mt-4 mb-3">ℹ️ Practical Information</h4>`;
+          markdown += `<ul class="list-disc list-inside space-y-2 text-gray-700">`;
+          
+          if (activity.location.name) {
+            markdown += `<li><strong>Location:</strong> ${activity.location.name}</li>`;
+          }
+          if (activity.location.address) {
+            markdown += `<li><strong>Address:</strong> ${activity.location.address}</li>`;
+          }
+          if (activity.location.openingHours) {
+            const hours = Array.isArray(activity.location.openingHours) 
+              ? activity.location.openingHours.join(", ") 
+              : activity.location.openingHours;
+            markdown += `<li><strong>Hours:</strong> ${hours}</li>`;
+          }
+          if (activity.location.website) {
+            markdown += `<li><strong>Website:</strong> <a href="${activity.location.website}" target="_blank" rel="noopener noreferrer" class="text-kultrip-purple hover:underline">${activity.location.website}</a></li>`;
+          }
+          if (activity.location.pricing) {
+            markdown += `<li><strong>Price:</strong> ${activity.location.pricing}</li>`;
+          }
+          
+          markdown += `</ul>`;
+
+          // Story reference if available
+          if (activity.location.inspirationReference) {
+            markdown += `<div class="mt-4 p-3 bg-kultrip-purple/10 rounded border-l-4 border-kultrip-purple">`;
+            markdown += `<p class="text-sm text-kultrip-purple italic">${activity.location.inspirationReference}</p>`;
+            markdown += `</div>`;
+          }
+        }
+        
+        markdown += `</div>`;
+      });
+
+      markdown += `<hr class="my-8 border-gray-300" />`;
+    });
+
+    markdown += `</div>`;
+    return markdown;
+  };
+
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <NavBar />
@@ -422,6 +516,15 @@ const Results = () => {
 
             {/* Action Buttons */}
             <div className="absolute top-8 right-8 flex gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                className={`backdrop-blur-sm ${viewMode === 'markdown' ? 'bg-kultrip-purple text-white hover:bg-kultrip-purple-dark' : 'bg-white/90 hover:bg-white'}`}
+                onClick={() => setViewMode(viewMode === 'standard' ? 'markdown' : 'standard')}
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                {viewMode === 'standard' ? 'Markdown View' : 'Standard View'}
+              </Button>
               <Button
                 variant="secondary"
                 size="sm"
@@ -487,6 +590,18 @@ const Results = () => {
 
         {/* Main Content */}
         <div className="container mx-auto px-4 py-8">
+          {viewMode === 'markdown' ? (
+            // Markdown View
+            <div className="max-w-5xl mx-auto">
+              <Card className="border-0 shadow-lg">
+                <CardContent className="p-0">
+                  <div 
+                    dangerouslySetInnerHTML={{ __html: generateMarkdownView() }}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          ) : (
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
             
             {/* Sidebar */}
@@ -814,6 +929,7 @@ const Results = () => {
               </Card>
             </div>
           </div>
+          )}
         </div>
       </main>
 
