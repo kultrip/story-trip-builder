@@ -29,7 +29,8 @@ import {
   Star,
   ChevronDown,
   ChevronUp,
-  Compass
+  Compass,
+  Camera
 } from "lucide-react";
 import { Itinerary } from "@/utils/types";
 import { searchImages } from "@/services/imageService";
@@ -60,39 +61,51 @@ const Results = () => {
     queryKey: ["itinerary", id, retryCount],
     queryFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      const itineraryData = await apiCall.getItinerary({ id: parseInt(id) });
+      
+      try {
+        const itineraryData = await apiCall.getItinerary({ id: parseInt(id) });
 
-      if (
-        itineraryData?.error ||
-        itineraryData?.message ||
-        itineraryData?.itinerary === undefined ||
-        (Array.isArray(itineraryData?.itinerary) && itineraryData.itinerary.length === 0)
-      ) {
-        throw new Error(
-          itineraryData?.message ||
-          itineraryData?.error ||
-          "Itinerary data is empty or invalid."
-        );
+        // Only throw error if there's an actual API error (not just empty data)
+        if (itineraryData?.error || itineraryData?.message) {
+          throw new Error(
+            itineraryData?.message || itineraryData?.error || "Failed to fetch itinerary"
+          );
+        }
+
+        // If itinerary data is missing or empty, return a default structure
+        if (
+          !itineraryData ||
+          !itineraryData.itinerary ||
+          !Array.isArray(itineraryData.itinerary) ||
+          itineraryData.itinerary.length === 0
+        ) {
+          // Return empty itinerary structure instead of throwing error
+          return {
+            id: parseInt(id),
+            destination: "Unknown Destination",
+            inspiration: "Your Story",
+            durationOfTrip: "0",
+            travelerType: "solo",
+            tripSummary_en: "",
+            result: {
+              dailyItineraries: [],
+            },
+          };
+        }
+
+        const result = itineraryData.itinerary[0];
+        return {
+          ...result.result,
+          ...result,
+        };
+      } catch (err) {
+        // Only throw if it's a genuine fetch/API error
+        if (err instanceof TypeError || (err as any)?.message?.includes("fetch")) {
+          throw err;
+        }
+        // For other errors, re-throw them
+        throw err;
       }
-
-      const isEmpty =
-        !itineraryData ||
-        !itineraryData.itinerary ||
-        !Array.isArray(itineraryData.itinerary) ||
-        itineraryData.itinerary.length === 0 ||
-        !itineraryData.itinerary[0] ||
-        Object.keys(itineraryData.itinerary[0]).length === 0 ||
-        !itineraryData.itinerary[0].destination;
-
-      if (isEmpty) {
-        throw new Error("Itinerary data is empty");
-      }
-
-      const result = itineraryData.itinerary[0];
-      return {
-        ...result.result,
-        ...result,
-      };
     },
     retry: false,
   });
@@ -304,8 +317,33 @@ const Results = () => {
             </Button>
           </DialogContent>
         </Dialog>
-        <NavBar />
-        <Footer />
+        <div className="min-h-screen flex flex-col bg-gray-50">
+          <NavBar />
+          <main className="flex-grow pt-20">
+            <div className="container mx-auto px-4 py-8">
+              <Card className="border-0 shadow-lg">
+                <CardContent className="p-8 text-center">
+                  <div className="mb-6">
+                    <MapPin className="h-16 w-16 text-kultrip-purple mx-auto mb-4" />
+                    <h2 className="font-display text-2xl font-semibold text-gray-800 mb-2">
+                      Unable to Load Itinerary
+                    </h2>
+                    <p className="text-gray-600">
+                      We're having trouble loading your itinerary right now. This could be a temporary issue.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handleRetry}
+                    className="bg-kultrip-purple text-white hover:bg-kultrip-purple-dark"
+                  >
+                    Try Again
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </main>
+          <Footer />
+        </div>
       </>
     );
   }
@@ -571,75 +609,95 @@ const Results = () => {
 
               {/* Day-by-Day Itinerary */}
               <div className="space-y-6">
-                {itinerary?.result?.dailyItineraries?.map((day, dayIndex) => (
-                  <Card key={dayIndex} className="border-0 shadow-lg overflow-hidden">
-                    
-                    {/* Day Header */}
-                    <div className="bg-gradient-to-r from-kultrip-purple to-kultrip-orange p-6 text-white">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-display text-2xl font-bold mb-2">
-                            Day {day.day}
-                          </h3>
-                          <p className="text-white/90 text-lg">
-                            {new Date(day.date).toLocaleDateString("en-US", {
-                              weekday: "long",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </p>
+                {itinerary?.result?.dailyItineraries && itinerary.result.dailyItineraries.length > 0 ? (
+                  itinerary.result.dailyItineraries.map((day, dayIndex) => (
+                    <Card key={dayIndex} className="border-0 shadow-lg overflow-hidden">
+                      
+                      {/* Day Header */}
+                      <div className="bg-gradient-to-r from-kultrip-purple to-kultrip-orange p-6 text-white">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-display text-2xl font-bold mb-2">
+                              Day {day.day}
+                            </h3>
+                            <p className="text-white/90 text-lg">
+                              {new Date(day.date).toLocaleDateString("en-US", {
+                                weekday: "long",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-4">
+                            {day.weather && (
+                              <div className="flex items-center bg-white/20 rounded-full px-3 py-1">
+                                {getWeatherIcon(day.weather.description, day.weather.icon)}
+                                <span className="ml-2 text-sm">
+                                  {day.weather.description || ""}
+                                  {day.weather.temperature != null
+                                    ? `, ${day.weather.temperature}°C`
+                                    : ""}
+                                </span>
+                              </div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-white hover:bg-white/20"
+                              onClick={() => toggleDay(day.day)}
+                            >
+                              {expandedDays[day.day] ? (
+                                <ChevronUp className="h-5 w-5" />
+                              ) : (
+                                <ChevronDown className="h-5 w-5" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-4">
-                          {day.weather && (
-                            <div className="flex items-center bg-white/20 rounded-full px-3 py-1">
-                              {getWeatherIcon(day.weather.description, day.weather.icon)}
-                              <span className="ml-2 text-sm">
-                                {day.weather.description || ""}
-                                {day.weather.temperature != null
-                                  ? `, ${day.weather.temperature}°C`
-                                  : ""}
-                              </span>
+                      </div>
+
+                      {/* Day Content */}
+                      <div className={`transition-all duration-300 ${expandedDays[day.day] === false ? 'max-h-0 overflow-hidden' : 'max-h-none'}`}>
+                        
+                        {/* Places/Activities */}
+                        <div className="p-6 space-y-6">
+                          {day.places && day.places.length > 0 ? (
+                            day.places.map((place, placeIndex) => (
+                              <PlaceCard 
+                                key={placeIndex} 
+                                place={place}
+                                googleMapsApiKey={itinerary.googleMapsApiKey}
+                              />
+                            ))
+                          ) : (
+                            <div className="text-center py-8 text-gray-500">
+                              No places scheduled for this day
                             </div>
                           )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-white hover:bg-white/20"
-                            onClick={() => toggleDay(day.day)}
-                          >
-                            {expandedDays[day.day] ? (
-                              <ChevronUp className="h-5 w-5" />
-                            ) : (
-                              <ChevronDown className="h-5 w-5" />
-                            )}
-                          </Button>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Day Content */}
-                    <div className={`transition-all duration-300 ${expandedDays[day.day] === false ? 'max-h-0 overflow-hidden' : 'max-h-none'}`}>
-                      
-                      {/* Places/Activities */}
-                      <div className="p-6 space-y-6">
-                        {day.places && day.places.length > 0 ? (
-                          day.places.map((place, placeIndex) => (
-                            <PlaceCard 
-                              key={placeIndex} 
-                              place={place}
-                              googleMapsApiKey={itinerary.googleMapsApiKey}
-                            />
-                          ))
-                        ) : (
-                          <div className="text-center py-8 text-gray-500">
-                            No places scheduled for this day
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
+                    </Card>
+                  ))
+                ) : (
+                  <Card className="border-0 shadow-lg">
+                    <CardContent className="p-12 text-center">
+                      <Compass className="h-16 w-16 text-kultrip-purple mx-auto mb-4 opacity-50" />
+                      <h3 className="font-display text-2xl font-semibold text-gray-800 mb-3">
+                        No Itinerary Available Yet
+                      </h3>
+                      <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                        Your adventure itinerary is currently being prepared. Please check back shortly or contact support if this persists.
+                      </p>
+                      <Button
+                        onClick={handleRetry}
+                        className="bg-kultrip-purple text-white hover:bg-kultrip-purple-dark"
+                      >
+                        Refresh Itinerary
+                      </Button>
+                    </CardContent>
                   </Card>
-                ))}
+                )}
               </div>
 
               {/* Call to Action */}
