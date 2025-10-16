@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
+import tailwindcssTypography from "@tailwindcss/typography";
 
 export default {
   darkMode: ["class"],
@@ -57,6 +59,15 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        kultrip: {
+          purple: {
+            DEFAULT: "hsl(262 52% 47%)",
+            dark: "hsl(260 50% 40%)",
+          },
+          orange: {
+            DEFAULT: "hsl(25 100% 63%)",
+          },
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -87,5 +98,5 @@ export default {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate, tailwindcssTypography],
 } satisfies Config;
