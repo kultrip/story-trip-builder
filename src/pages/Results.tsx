@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import PlaceCard from "@/components/PlaceCard";
-import { generateItineraryPDF } from "@/utils/generateItineraryPDF.js"
+import { generateItineraryPDF } from "@/utils/generateItineraryPDF"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
