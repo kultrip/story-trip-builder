@@ -62,8 +62,8 @@ const Results = () => {
     queryFn: async () => {
       await new Promise((resolve) => setTimeout(resolve, 1500));
       
-      // Validate id parameter
-      if (!id || isNaN(parseInt(id))) {
+      // Validate id parameter - must be a positive integer
+      if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
         throw new Error("Invalid itinerary ID");
       }
       
@@ -104,7 +104,8 @@ const Results = () => {
           ...result,
         };
       } catch (err) {
-        // Re-throw all errors - the useEffect will handle reimbursement for true errors
+        // Re-throw all errors - the useEffect below will show a dialog and attempt credit reimbursement
+        // This handles network failures, API errors, and any other exceptions
         throw err;
       }
     },
