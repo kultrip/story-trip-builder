@@ -71,5 +71,8 @@ export interface DailyItinerary {
     description?: string;
     temperature?: number;
   };
-  places: Place[];
+  places?: Place[];
+  morningActivities?: Activity[];
+  afternoonActivities?: Activity[];
+  eveningActivities?: Activity[];
 }

@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import NavBar from "@/components/NavBar";
 import Footer from "@/components/Footer";
 import PlaceCard from "@/components/PlaceCard";
+import ActivityCard from "@/components/ActivityCard";
+import MapEmbed from "@/components/MapEmbed";
 import { generateItineraryPDF } from "@/utils/generateItineraryPDF"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +34,7 @@ import {
   Compass,
   Camera
 } from "lucide-react";
-import { Itinerary } from "@/utils/types";
+import { Itinerary, Activity } from "@/utils/types";
 import { searchImages } from "@/services/imageService";
 import { useNavigate } from "react-router-dom";
 
@@ -67,47 +69,41 @@ const Results = () => {
         throw new Error("Invalid itinerary ID");
       }
       
-      try {
-        const itineraryData = await apiCall.getItinerary({ id: parseInt(id) });
+      const itineraryData = await apiCall.getItinerary({ id: parseInt(id) });
 
-        // Only throw error if there's an actual API error (not just empty data)
-        if (itineraryData?.error || itineraryData?.message) {
-          throw new Error(
-            itineraryData?.message || itineraryData?.error || "Failed to fetch itinerary"
-          );
-        }
-
-        // If itinerary data is missing or empty, return a default structure
-        if (
-          !itineraryData ||
-          !itineraryData.itinerary ||
-          !Array.isArray(itineraryData.itinerary) ||
-          itineraryData.itinerary.length === 0
-        ) {
-          // Return empty itinerary structure instead of throwing error
-          return {
-            id: parseInt(id),
-            destination: "Unknown Destination",
-            inspiration: "Your Story",
-            durationOfTrip: "0",
-            travelerType: "solo",
-            tripSummary_en: "",
-            result: {
-              dailyItineraries: [],
-            },
-          };
-        }
-
-        const result = itineraryData.itinerary[0];
-        return {
-          ...result.result,
-          ...result,
-        };
-      } catch (err) {
-        // Re-throw all errors - the useEffect below will show a dialog and attempt credit reimbursement
-        // This handles network failures, API errors, and any other exceptions
-        throw err;
+      // Only throw error if there's an actual API error (not just empty data)
+      if (itineraryData?.error || itineraryData?.message) {
+        throw new Error(
+          itineraryData?.message || itineraryData?.error || "Failed to fetch itinerary"
+        );
       }
+
+      // If itinerary data is missing or empty, return a default structure
+      if (
+        !itineraryData ||
+        !itineraryData.itinerary ||
+        !Array.isArray(itineraryData.itinerary) ||
+        itineraryData.itinerary.length === 0
+      ) {
+        // Return empty itinerary structure instead of throwing error
+        return {
+          id: parseInt(id),
+          destination: "Unknown Destination",
+          inspiration: "Your Story",
+          durationOfTrip: "0",
+          travelerType: "solo",
+          tripSummary_en: "",
+          result: {
+            dailyItineraries: [],
+          },
+        };
+      }
+
+      const result = itineraryData.itinerary[0];
+      return {
+        ...result.result,
+        ...result,
+      };
     },
     retry: false,
   });
@@ -238,6 +234,66 @@ const Results = () => {
       ...prev,
       [dayNumber]: !prev[dayNumber]
     }));
+  };
+
+  // Helper function to collect all activities from a day
+  const collectActivitiesFromDay = (day: { 
+    morningActivities?: Activity[]; 
+    afternoonActivities?: Activity[]; 
+    eveningActivities?: Activity[]; 
+  }): { activities: Activity[], timeOfDay: string }[] => {
+    const activityGroups: { activities: Activity[], timeOfDay: string }[] = [];
+    
+    if (day.morningActivities && day.morningActivities.length > 0) {
+      activityGroups.push({ activities: day.morningActivities, timeOfDay: 'morning' });
+    }
+    if (day.afternoonActivities && day.afternoonActivities.length > 0) {
+      activityGroups.push({ activities: day.afternoonActivities, timeOfDay: 'afternoon' });
+    }
+    if (day.eveningActivities && day.eveningActivities.length > 0) {
+      activityGroups.push({ activities: day.eveningActivities, timeOfDay: 'evening' });
+    }
+    
+    return activityGroups;
+  };
+
+  // Helper function to collect all locations from activities for map display
+  const collectLocationsFromActivities = (activityGroups: { activities: Activity[], timeOfDay: string }[]) => {
+    const locations: { lat: number; lng: number; name: string }[] = [];
+    
+    activityGroups.forEach(group => {
+      group.activities.forEach(activity => {
+        if (activity.location && activity.location.lat && activity.location.lng) {
+          locations.push({
+            lat: activity.location.lat,
+            lng: activity.location.lng,
+            name: activity.location.name || activity.title
+          });
+        }
+      });
+    });
+    
+    return locations;
+  };
+
+  // Helper function to collect all locations from places for map display
+  const collectLocationsFromPlaces = (places: { 
+    name_en: string; 
+    mapCoordinates?: { lat: number; lng: number } 
+  }[]) => {
+    const locations: { lat: number; lng: number; name: string }[] = [];
+    
+    places.forEach(place => {
+      if (place.mapCoordinates && place.mapCoordinates.lat && place.mapCoordinates.lng) {
+        locations.push({
+          lat: place.mapCoordinates.lat,
+          lng: place.mapCoordinates.lng,
+          name: place.name_en
+        });
+      }
+    });
+    
+    return locations;
   };
 
   useEffect(() => {
@@ -661,22 +717,91 @@ const Results = () => {
                       {/* Day Content */}
                       <div className={`transition-all duration-300 ${expandedDays[day.day] === false ? 'max-h-0 overflow-hidden' : 'max-h-none'}`}>
                         
-                        {/* Places/Activities */}
-                        <div className="p-6 space-y-6">
-                          {day.places && day.places.length > 0 ? (
-                            day.places.map((place, placeIndex) => (
-                              <PlaceCard 
-                                key={placeIndex} 
-                                place={place}
-                                googleMapsApiKey={itinerary.googleMapsApiKey}
-                              />
-                            ))
-                          ) : (
-                            <div className="text-center py-8 text-gray-500">
-                              No places scheduled for this day
-                            </div>
-                          )}
-                        </div>
+                        {/* Collect all locations for map display */}
+                        {(() => {
+                          // Check if this day uses activity-based or place-based structure
+                          const activityGroups = collectActivitiesFromDay(day);
+                          const hasActivities = activityGroups.length > 0;
+                          const hasPlaces = day.places && day.places.length > 0;
+                          
+                          // Collect all locations for the map
+                          let allLocations: { lat: number; lng: number; name: string }[] = [];
+                          if (hasActivities) {
+                            allLocations = collectLocationsFromActivities(activityGroups);
+                          } else if (hasPlaces) {
+                            allLocations = collectLocationsFromPlaces(day.places);
+                          }
+
+                          return (
+                            <>
+                              {/* Day Overview Map - Shows all locations for the day */}
+                              {allLocations.length > 0 && (
+                                <div className="p-6 pb-0">
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-gray-900 flex items-center">
+                                      <MapPin className="h-5 w-5 text-kultrip-purple mr-2" />
+                                      Day {day.day} Overview Map
+                                      <span className="ml-2 text-sm text-gray-500">
+                                        ({allLocations.length} location{allLocations.length > 1 ? 's' : ''})
+                                      </span>
+                                    </h4>
+                                    <MapEmbed 
+                                      locations={allLocations}
+                                      className="shadow-md h-80"
+                                    />
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Activities Section */}
+                              {hasActivities && (
+                                <div className="p-6 space-y-8">
+                                  {activityGroups.map((group, groupIndex) => (
+                                    <div key={groupIndex} className="space-y-4">
+                                      <div className="flex items-center space-x-2">
+                                        <div className="h-px flex-grow bg-gradient-to-r from-kultrip-purple/20 to-transparent"></div>
+                                        <h4 className="font-display text-lg font-semibold text-gray-700 capitalize">
+                                          {group.timeOfDay} Activities
+                                        </h4>
+                                        <div className="h-px flex-grow bg-gradient-to-l from-kultrip-purple/20 to-transparent"></div>
+                                      </div>
+                                      <div className="space-y-6">
+                                        {group.activities.map((activity, activityIndex) => (
+                                          <ActivityCard 
+                                            key={activityIndex}
+                                            activity={activity}
+                                            googleMapsApiKey={itinerary.googleMapsApiKey}
+                                            timeOfDay={group.timeOfDay as 'morning' | 'afternoon' | 'evening'}
+                                          />
+                                        ))}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Places Section (backward compatibility) */}
+                              {!hasActivities && hasPlaces && (
+                                <div className="p-6 space-y-6">
+                                  {day.places.map((place, placeIndex) => (
+                                    <PlaceCard 
+                                      key={placeIndex} 
+                                      place={place}
+                                      googleMapsApiKey={itinerary.googleMapsApiKey}
+                                    />
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* No content message */}
+                              {!hasActivities && !hasPlaces && (
+                                <div className="p-6 text-center py-8 text-gray-500">
+                                  No activities scheduled for this day
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
 
                     </Card>
