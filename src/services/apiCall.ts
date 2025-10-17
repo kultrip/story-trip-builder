@@ -1,13 +1,13 @@
 const apiCall = {
   getItinerary: async ({ id }: { id: number }) => {
-    // Placeholder implementation - always return mock itinerary for local testing
+    // Placeholder implementation - returns mock itinerary with activities structure
     return {
       itinerary: [
         {
           id: id,
           destination: "Paris",
           inspiration: "Emily in Paris",
-          durationOfTrip: "5",
+          durationOfTrip: "3",
           travelerType: "solo",
           tripSummary_en: "Experience the charm of Paris through the lens of your favorite story. From iconic landmarks to hidden gems, this journey blends culture, history, and the magic of storytelling.",
           googleMapsApiKey: "",
@@ -21,36 +21,60 @@ const apiCall = {
                   description: "Sunny",
                   temperature: 22,
                 },
-                places: [
+                morningActivities: [
                   {
-                    name_en: "Eiffel Tower",
-                    description_en: "The iconic iron lattice tower on the Champ de Mars. A must-see landmark that offers breathtaking views of Paris.",
-                    address_en: "Champ de Mars, 5 Avenue Anatole France, 75007 Paris",
-                    opening_hours_en: "9:30 AM - 11:45 PM",
-                    website_en: "https://www.toureiffel.paris",
-                    contact: "+33 892 70 12 39",
-                    reviews_summary_en: "Amazing views and a true symbol of Paris!",
+                    id: "1-morning-1",
+                    title: "Eiffel Tower Visit",
+                    description: "Start your day at the iconic **Eiffel Tower**, the iron lattice tower that inspired countless romantic scenes in literature and film. Experience breathtaking views of Paris from its observation decks.",
+                    time: "9:00 AM - 11:00 AM",
                     images: [],
-                    mapCoordinates: {
+                    location: {
                       lat: 48.8584,
                       lng: 2.2945,
-                    },
-                  },
+                      name: "Eiffel Tower",
+                      address: "Champ de Mars, 5 Avenue Anatole France, 75007 Paris",
+                      openingHours: "9:30 AM - 11:45 PM",
+                      website: "https://www.toureiffel.paris",
+                      pricing: "€26.10 for adults (top floor)"
+                    }
+                  }
+                ],
+                afternoonActivities: [
                   {
-                    name_en: "Louvre Museum",
-                    description_en: "The world's largest art museum and a historic monument in Paris. Home to thousands of works of art, including the Mona Lisa.",
-                    address_en: "Rue de Rivoli, 75001 Paris",
-                    opening_hours_en: "9:00 AM - 6:00 PM (Closed Tuesdays)",
-                    website_en: "https://www.louvre.fr",
-                    contact: "+33 1 40 20 50 50",
-                    reviews_summary_en: "An incredible collection of art and history.",
+                    id: "1-afternoon-1",
+                    title: "Louvre Museum Exploration",
+                    description: "Discover the world's largest art museum, home to the **Mona Lisa** and thousands of other masterpieces. Walk through halls that have inspired artists and writers for centuries.",
+                    time: "2:00 PM - 5:00 PM",
                     images: [],
-                    mapCoordinates: {
+                    location: {
                       lat: 48.8606,
                       lng: 2.3376,
-                    },
-                  },
+                      name: "Louvre Museum",
+                      address: "Rue de Rivoli, 75001 Paris",
+                      openingHours: "9:00 AM - 6:00 PM (Closed Tuesdays)",
+                      website: "https://www.louvre.fr",
+                      pricing: "€17 for adults"
+                    }
+                  }
                 ],
+                eveningActivities: [
+                  {
+                    id: "1-evening-1",
+                    title: "Seine River Cruise",
+                    description: "End your day with a magical cruise along the **Seine River**, enjoying panoramic views of illuminated landmarks including Notre-Dame and the Musée d'Orsay.",
+                    time: "7:30 PM - 9:00 PM",
+                    images: [],
+                    location: {
+                      lat: 48.8606,
+                      lng: 2.3376,
+                      name: "Seine River - Port de la Bourdonnais",
+                      address: "Port de la Bourdonnais, 75007 Paris",
+                      openingHours: "Various departure times",
+                      website: "https://www.bateaux-parisiens.com",
+                      pricing: "€15 for adults"
+                    }
+                  }
+                ]
               },
               {
                 day: 2,
@@ -60,23 +84,123 @@ const apiCall = {
                   description: "Partly Cloudy",
                   temperature: 20,
                 },
-                places: [
+                morningActivities: [
                   {
-                    name_en: "Montmartre",
-                    description_en: "A historic and artistic neighborhood known for its bohemian past, charming streets, and the stunning Sacré-Cœur Basilica.",
-                    address_en: "Montmartre, 75018 Paris",
-                    opening_hours_en: "Open 24 hours",
-                    website_en: "",
-                    contact: "",
-                    reviews_summary_en: "Beautiful area with amazing views and artistic vibe.",
+                    id: "2-morning-1",
+                    title: "Montmartre & Sacré-Cœur",
+                    description: "Explore the artistic neighborhood of **Montmartre**, where Picasso and Van Gogh once lived. Visit the stunning Sacré-Cœur Basilica with its panoramic city views.",
+                    time: "9:00 AM - 12:00 PM",
                     images: [],
-                    mapCoordinates: {
+                    location: {
                       lat: 48.8867,
                       lng: 2.3431,
-                    },
-                  },
+                      name: "Montmartre & Sacré-Cœur",
+                      address: "Montmartre, 75018 Paris",
+                      openingHours: "Open 24 hours (Basilica: 6:00 AM - 10:30 PM)",
+                      website: "https://www.sacre-coeur-montmartre.com",
+                      pricing: "Free entry to the basilica"
+                    }
+                  }
                 ],
+                afternoonActivities: [
+                  {
+                    id: "2-afternoon-1",
+                    title: "Latin Quarter Stroll",
+                    description: "Wander through the historic **Latin Quarter**, famous for its bohemian atmosphere, bookshops, and cafés. Visit Shakespeare and Company, the legendary English bookshop.",
+                    time: "2:00 PM - 5:00 PM",
+                    images: [],
+                    location: {
+                      lat: 48.8529,
+                      lng: 2.3469,
+                      name: "Latin Quarter",
+                      address: "5th Arrondissement, Paris",
+                      openingHours: "Open 24 hours",
+                      pricing: "Free to explore"
+                    }
+                  }
+                ],
+                eveningActivities: [
+                  {
+                    id: "2-evening-1",
+                    title: "Moulin Rouge Show",
+                    description: "Experience the glamour and excitement of the world-famous **Moulin Rouge** cabaret show, a Parisian icon since 1889 featuring stunning performances.",
+                    time: "9:00 PM - 11:00 PM",
+                    images: [],
+                    location: {
+                      lat: 48.8841,
+                      lng: 2.3322,
+                      name: "Moulin Rouge",
+                      address: "82 Boulevard de Clichy, 75018 Paris",
+                      openingHours: "Shows at 9:00 PM and 11:00 PM",
+                      website: "https://www.moulinrouge.fr",
+                      pricing: "€87+ per person (varies by package)"
+                    }
+                  }
+                ]
               },
+              {
+                day: 3,
+                date: new Date(Date.now() + 172800000).toISOString().split('T')[0],
+                weather: {
+                  icon: "sun",
+                  description: "Sunny",
+                  temperature: 23,
+                },
+                morningActivities: [
+                  {
+                    id: "3-morning-1",
+                    title: "Versailles Palace Tour",
+                    description: "Journey to the magnificent **Palace of Versailles**, the opulent former royal residence. Explore the Hall of Mirrors, the Royal Apartments, and the stunning gardens.",
+                    time: "9:00 AM - 1:00 PM",
+                    images: [],
+                    location: {
+                      lat: 48.8049,
+                      lng: 2.1204,
+                      name: "Palace of Versailles",
+                      address: "Place d'Armes, 78000 Versailles",
+                      openingHours: "9:00 AM - 6:30 PM (Closed Mondays)",
+                      website: "https://www.chateauversailles.fr",
+                      pricing: "€19.50 for Palace, €27 for full access"
+                    }
+                  }
+                ],
+                afternoonActivities: [
+                  {
+                    id: "3-afternoon-1",
+                    title: "Champs-Élysées Shopping",
+                    description: "Stroll down the famous **Champs-Élysées** avenue, lined with luxury boutiques, cafés, and theaters. Don't miss the Arc de Triomphe at the top of the avenue.",
+                    time: "3:00 PM - 6:00 PM",
+                    images: [],
+                    location: {
+                      lat: 48.8698,
+                      lng: 2.3078,
+                      name: "Champs-Élysées",
+                      address: "Avenue des Champs-Élysées, 75008 Paris",
+                      openingHours: "Open 24 hours (shops vary)",
+                      pricing: "Free to walk"
+                    }
+                  }
+                ],
+                eveningActivities: [
+                  {
+                    id: "3-evening-1",
+                    title: "Farewell Dinner at Le Jules Verne",
+                    description: "Conclude your Parisian adventure with an elegant dinner at **Le Jules Verne**, the Michelin-starred restaurant located in the Eiffel Tower, offering gourmet French cuisine and spectacular views.",
+                    time: "7:30 PM - 10:00 PM",
+                    images: [],
+                    location: {
+                      lat: 48.8584,
+                      lng: 2.2945,
+                      name: "Le Jules Verne - Eiffel Tower",
+                      address: "Eiffel Tower, Avenue Gustave Eiffel, 75007 Paris",
+                      openingHours: "12:00 PM - 1:30 PM, 7:00 PM - 9:30 PM",
+                      website: "https://www.lejulesverne-paris.com",
+                      pricing: "€190-250 per person"
+                    },
+                    bookingUrl: "https://www.lejulesverne-paris.com/reservation"
+                  }
+                ]
+              }
             ],
           },
         },
