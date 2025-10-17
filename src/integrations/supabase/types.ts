@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      itineraries: {
+        Row: {
+          id: number
+          user_id: string | null
+          destination: string
+          inspiration: string
+          duration_of_trip: string
+          traveler_type: string
+          trip_summary_en: string | null
+          google_maps_api_key: string | null
+          result: Json
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          user_id?: string | null
+          destination: string
+          inspiration: string
+          duration_of_trip: string
+          traveler_type: string
+          trip_summary_en?: string | null
+          google_maps_api_key?: string | null
+          result: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          user_id?: string | null
+          destination?: string
+          inspiration?: string
+          duration_of_trip?: string
+          traveler_type?: string
+          trip_summary_en?: string | null
+          google_maps_api_key?: string | null
+          result?: Json
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       leads: {
         Row: {
           agency_id: string
