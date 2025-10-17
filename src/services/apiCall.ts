@@ -65,8 +65,8 @@ const apiCall = {
                     time: "7:30 PM - 9:00 PM",
                     images: [],
                     location: {
-                      lat: 48.8606,
-                      lng: 2.3376,
+                      lat: 48.8584,
+                      lng: 2.2945,
                       name: "Seine River - Port de la Bourdonnais",
                       address: "Port de la Bourdonnais, 75007 Paris",
                       openingHours: "Various departure times",

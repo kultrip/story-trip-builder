@@ -115,6 +115,7 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, googleMapsApiKey,
                   href={`https://www.google.com/maps/search/?api=1&query=${activity.location.lat},${activity.location.lng}`}
                   target="_blank"
                   rel="noopener noreferrer"
+                  aria-label="Open location in Google Maps"
                   className="inline-flex items-center gap-1 text-sm text-kultrip-purple hover:text-kultrip-orange transition-colors"
                 >
                   <MapPin className="w-4 h-4" />
@@ -155,7 +156,9 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ activity, googleMapsApiKey,
                       <div className="text-sm text-gray-600 space-y-1">
                         {typeof activity.location.openingHours === 'string' 
                           ? activity.location.openingHours.split('\n').map((line, i) => <div key={i}>{line}</div>)
-                          : activity.location.openingHours.map((line, i) => <div key={i}>{line}</div>)
+                          : Array.isArray(activity.location.openingHours)
+                            ? activity.location.openingHours.map((line, i) => <div key={i}>{line}</div>)
+                            : null
                         }
                       </div>
                     </div>

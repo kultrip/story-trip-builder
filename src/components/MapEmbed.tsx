@@ -72,7 +72,7 @@ const MapEmbed: React.FC<MapEmbedProps> = ({
       })
         .setLngLat([location.lng, location.lat])
         .setPopup(new mapboxgl.Popup().setHTML(`<strong>${location.name}</strong>`))
-        .addTo(map.current!);
+        .addTo(map.current as mapboxgl.Map);
       
       markers.current.push(marker);
     });
