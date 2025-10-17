@@ -87,14 +87,14 @@ INSERT INTO public.itineraries (
         "morningActivities": [
           {
             "id": "1-m-1",
-            "title": "King''s Cross Station - Platform 9¾",
-            "description": "Visit the famous **Platform 9¾** at King''s Cross Station",
+            "title": "King\"s Cross Station - Platform 9¾",
+            "description": "Visit the famous **Platform 9¾** at King\"s Cross Station",
             "time": "9:00 AM - 11:00 AM",
             "images": [],
             "location": {
               "lat": 51.5322,
               "lng": -0.1236,
-              "name": "King''s Cross Station",
+              "name": "King\"s Cross Station",
               "address": "Euston Rd, London N1 9AP"
             }
           }

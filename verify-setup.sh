@@ -29,6 +29,11 @@ echo ""
 
 # Check if migrations exist
 echo "Checking migrations..."
+if [ ! -d "supabase/migrations" ]; then
+    echo "❌ No migrations directory found"
+    exit 1
+fi
+
 MIGRATION_COUNT=$(ls -1 supabase/migrations/*.sql 2>/dev/null | wc -l)
 if [ "$MIGRATION_COUNT" -eq 0 ]; then
     echo "❌ No migrations found"

@@ -59,6 +59,9 @@ export async function runApiTests() {
 
 // Allow running from browser console
 if (typeof window !== 'undefined') {
-  (window as any).runApiTests = runApiTests;
+  interface WindowWithTests extends Window {
+    runApiTests?: () => Promise<void>;
+  }
+  (window as WindowWithTests).runApiTests = runApiTests;
   console.log('Test utility loaded. Run runApiTests() in console to test the API.');
 }
