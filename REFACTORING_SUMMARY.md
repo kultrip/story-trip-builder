@@ -89,6 +89,33 @@ Comprehensive testing guide covering:
 - Database schema documentation
 - Troubleshooting guide
 
+**Database Schema Details:**
+The `itineraries` table schema:
+
+| Column | Type | Constraints | Purpose |
+|--------|------|-------------|---------|
+| `id` | SERIAL | PRIMARY KEY | Auto-incrementing unique identifier for each itinerary |
+| `user_id` | UUID | REFERENCES auth.users(id), NULL allowed | Links itinerary to user (NULL for public/shared itineraries) |
+| `destination` | TEXT | NOT NULL | Destination name (e.g., "Paris", "London") |
+| `inspiration` | TEXT | NOT NULL | Story/theme inspiration (e.g., "Emily in Paris", "Harry Potter") |
+| `duration_of_trip` | TEXT | NOT NULL | Trip length as string (e.g., "3", "5") |
+| `traveler_type` | TEXT | NOT NULL | Type of traveler (e.g., "solo", "family", "couple") |
+| `trip_summary_en` | TEXT | NULL allowed | English summary/introduction of the trip |
+| `google_maps_api_key` | TEXT | NULL allowed | Optional Google Maps API key for enhanced features |
+| `result` | JSONB | NOT NULL | Complete itinerary data including dailyItineraries array |
+| `created_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Record creation timestamp |
+| `updated_at` | TIMESTAMPTZ | NOT NULL, DEFAULT now() | Last update timestamp (auto-updated via trigger) |
+
+**Indexes:**
+- `idx_itineraries_user_id` ON user_id (for user's itinerary queries)
+- `idx_itineraries_created_at` ON created_at DESC (for chronological sorting)
+- `idx_itineraries_destination` ON destination (for destination-based searches)
+
+**Row Level Security (RLS) Policies:**
+- Users can view their own itineraries (WHERE user_id = auth.uid())
+- Public can view all itineraries (for sharing functionality)
+- Users can insert/update only their own itineraries
+
 #### `verify-setup.sh`
 Bash script to verify:
 - Environment variables configuration
