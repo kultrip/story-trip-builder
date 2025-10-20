@@ -57,6 +57,8 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        "kultrip-purple": "hsl(var(--primary))",
+        "kultrip-orange": "hsl(var(--secondary))",
       },
       borderRadius: {
         lg: "var(--radius)",
