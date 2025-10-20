@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { Users, DollarSign, BarChart2 } from "lucide-react";
 
 type Props = {
   currency?: string; // default "$"
@@ -55,21 +56,41 @@ export default function Calculator({
   }, [visits, leadConv, salesConv, avgTicket, upliftPercent]);
 
   return (
-    <section className="bg-white rounded-lg shadow p-6 max-w-4xl mx-auto">
-      <h3 className="text-2xl font-semibold mb-2">Estimate your Kultrip-driven revenue uplift</h3>
-      <p className="text-sm text-gray-600 mb-4">
-        Toggle Kultrip on to model a lift in lead conversion. Default uplift = {defaultUpliftPercent}%. 
-      </p>
+    <section className="bg-white rounded-2xl shadow-lg p-8 max-w-5xl mx-auto border border-gray-100">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-6 mb-6">
+        <div>
+          <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-gradient-to-r from-primary/10 to-secondary/10 text-sm font-medium">
+            <BarChart2 className="w-4 h-4 text-primary" />
+            Estimate your Kultrip-driven revenue uplift
+          </div>
+          <h3 className="text-2xl font-semibold mt-3">See how Kultrip could move the needle</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-xl">
+            Adjust your traffic and conversion numbers to preview the monthly and annual uplift. Default uplift = {defaultUpliftPercent}%.
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="text-right">
+          <div className="text-xs text-gray-500">Sample assumptions</div>
+          <div className="mt-2 text-sm text-gray-700">Visits: {visits.toLocaleString()}</div>
+          <div className="text-sm text-gray-700">Avg ticket: {formatCurrency(avgTicket, currency)}</div>
+        </div>
+      </div>
+
+      {/* Form */}
+      <form className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6" onSubmit={(e) => e.preventDefault()}>
         <label className="flex flex-col">
-          <span className="text-sm text-gray-700">Website visits / month</span>
+          <span className="text-sm text-gray-700 flex items-center gap-2">
+            <Users className="w-4 h-4 text-gray-400" />
+            Website visits / month
+          </span>
           <input
             type="number"
-            className="mt-1 p-2 border rounded"
+            className="mt-2 p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30"
             value={visits}
             onChange={(e) => setVisits(Number(e.target.value))}
             min={0}
+            aria-label="Website visits per month"
           />
         </label>
 
@@ -77,11 +98,12 @@ export default function Calculator({
           <span className="text-sm text-gray-700">Conversion to leads (%)</span>
           <input
             type="number"
-            className="mt-1 p-2 border rounded"
+            className="mt-2 p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30"
             value={leadConv}
             onChange={(e) => setLeadConv(Number(e.target.value))}
             min={0}
             step={0.1}
+            aria-label="Conversion to leads percentage"
           />
         </label>
 
@@ -89,94 +111,131 @@ export default function Calculator({
           <span className="text-sm text-gray-700">Conversion to sales (%)</span>
           <input
             type="number"
-            className="mt-1 p-2 border rounded"
+            className="mt-2 p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30"
             value={salesConv}
             onChange={(e) => setSalesConv(Number(e.target.value))}
             min={0}
             step={0.1}
+            aria-label="Conversion to sales percentage"
           />
         </label>
 
         <label className="flex flex-col">
-          <span className="text-sm text-gray-700">Average ticket size ({currency})</span>
+          <span className="text-sm text-gray-700 flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-gray-400" />
+            Average ticket size ({currency})
+          </span>
           <input
             type="number"
-            className="mt-1 p-2 border rounded"
+            className="mt-2 p-3 border border-gray-200 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/30"
             value={avgTicket}
             onChange={(e) => setAvgTicket(Number(e.target.value))}
             min={0}
+            aria-label="Average ticket size"
           />
         </label>
-      </div>
+      </form>
 
-      <div className="mb-4">
-        <span className="text-sm text-gray-700 mr-2">Kultrip uplift preset:</span>
-        {presets.map((p) => (
-          <button
-            key={p.value}
-            className={`mr-2 mb-2 px-3 py-1 rounded border ${
-              upliftPercent === p.value ? "bg-kultrip-purple text-white" : "bg-white"
-            }`}
-            onClick={() => setUpliftPercent(p.value)}
-          >
-            {p.label} ({p.value}%)
-          </button>
-        ))}
-        <div className="mt-2">
+      {/* Presets & slider */}
+      <div className="mb-6">
+        <div className="flex flex-wrap items-center gap-3 mb-3">
+          <span className="text-sm text-gray-700">Kultrip uplift preset:</span>
+          {presets.map((p) => (
+            <button
+              key={p.value}
+              className={`px-3 py-1 rounded-full text-sm font-medium border transition-all duration-150 ${
+                upliftPercent === p.value
+                  ? "bg-gradient-to-r from-primary to-secondary text-white border-transparent shadow"
+                  : "bg-white text-gray-700 border-gray-200 hover:shadow-sm"
+              }`}
+              onClick={() => setUpliftPercent(p.value)}
+              type="button"
+              aria-pressed={upliftPercent === p.value}
+            >
+              {p.label} ({p.value}%)
+            </button>
+          ))}
+        </div>
+
+        <div className="space-y-2">
           <input
             type="range"
             min={0}
             max={500}
             value={upliftPercent}
             onChange={(e) => setUpliftPercent(Number(e.target.value))}
+            className="w-full h-2 bg-gradient-to-r from-primary to-secondary rounded-lg"
+            aria-label="Uplift percent"
           />
-          <div className="text-sm text-gray-600 mt-1">Uplift: {upliftPercent}%</div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
-        <div className="p-4 bg-gray-50 rounded">
-          <div className="text-xs text-gray-500">Baseline monthly revenue</div>
-          <div className="text-xl font-bold">{formatCurrency(results.Revenue0, currency)}</div>
-
-          <div className="text-xs text-gray-500 mt-3">Kultrip monthly revenue (with uplift)</div>
-          <div className="text-xl font-bold">{formatCurrency(results.Revenue1, currency)}</div>
-
-          <div className="text-sm text-green-600 mt-2">
-            +{formatCurrency(results.DeltaRevenue, currency)} / month
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div>
+              Uplift: <span className="font-medium">{upliftPercent}%</span>
+            </div>
+            <div className="text-xs text-muted-foreground">Projected increase vs baseline</div>
           </div>
-          <div className="text-xs text-gray-500">~{formatCurrency(results.DeltaRevenue * 12, currency)} annual uplift</div>
-        </div>
-
-        <div className="p-4 rounded border">
-          <div className="text-sm text-gray-600">Leads / month</div>
-          <div className="text-lg font-medium">{Math.round(results.Leads0)} → {Math.round(results.Leads1)}</div>
-
-          <div className="text-sm text-gray-600 mt-3">Sales / month</div>
-          <div className="text-lg font-medium">{Math.round(results.Sales0)} → {Math.round(results.Sales1)}</div>
         </div>
       </div>
 
-      <div className="flex gap-2 mt-4">
-        <button
-          className="px-4 py-2 bg-kultrip-purple text-white rounded"
-          onClick={() =>
-            onRequestReport?.({
-              visits,
-              leadConv,
-              salesConv,
-              avgTicket,
-              upliftPercent,
-              results,
-            })
-          }
-        >
-          Get my personalized ROI report
-        </button>
+      {/* Results */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+        <div className="col-span-1 md:col-span-2 p-6 rounded-lg bg-gradient-to-r from-card to-card/50 border border-gray-100 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-xs text-gray-500">Baseline monthly revenue</div>
+              <div className="text-2xl font-bold mt-1">{formatCurrency(results.Revenue0, currency)}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-xs text-gray-500">With Kultrip</div>
+              <div className="text-2xl font-bold text-primary mt-1">{formatCurrency(results.Revenue1, currency)}</div>
+            </div>
+          </div>
 
-        <a href="/contact" className="px-4 py-2 border rounded text-sm self-center">
-          Schedule a demo
-        </a>
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <div className="px-3 py-2 rounded-md bg-white/60 border border-green-100">
+              <div className="text-sm text-green-700 font-semibold">+{formatCurrency(results.DeltaRevenue, currency)} / mo</div>
+              <div className="text-xs text-gray-500">~{formatCurrency(results.DeltaRevenue * 12, currency)} annual</div>
+            </div>
+
+            <div className="px-3 py-2 rounded-md bg-white/40 border border-gray-100">
+              <div className="text-sm text-gray-700">Leads / mo</div>
+              <div className="text-lg font-medium">{Math.round(results.Leads0)} → {Math.round(results.Leads1)}</div>
+            </div>
+
+            <div className="px-3 py-2 rounded-md bg-white/40 border border-gray-100">
+              <div className="text-sm text-gray-700">Sales / mo</div>
+              <div className="text-lg font-medium">{Math.round(results.Sales0)} → {Math.round(results.Sales1)}</div>
+            </div>
+          </div>
+        </div>
+
+        <aside className="p-6 rounded-lg bg-kultrip-purple/5 border border-kultrip-purple/10 text-center">
+          <div className="text-sm text-gray-600">Estimated uplift</div>
+          <div className="text-3xl font-bold text-kultrip-purple mt-2">{upliftPercent}%</div>
+          <div className="text-xs text-gray-500 mt-2">Use this as a benchmark when talking to clients</div>
+
+          <div className="mt-4 flex flex-col gap-2">
+            <button
+              className="w-full px-3 py-2 bg-kultrip-purple text-white rounded-md"
+              onClick={() =>
+                onRequestReport?.({
+                  visits,
+                  leadConv,
+                  salesConv,
+                  avgTicket,
+                  upliftPercent,
+                  results,
+                })
+              }
+              type="button"
+            >
+              Get my personalized ROI report
+            </button>
+
+            <a href="/contact" className="w-full inline-block px-3 py-2 border rounded-md text-sm text-gray-700">
+              Schedule a demo
+            </a>
+          </div>
+        </aside>
       </div>
     </section>
   );
